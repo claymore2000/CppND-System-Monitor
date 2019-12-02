@@ -30,6 +30,7 @@ vector<Process>& System::Processes()
       int tPid = currentPids.at(i);
       p.SetPid(tPid);
       p.SetUser(LinuxParser::User(LinuxParser::Uid(tPid)));
+      p.SetRam(LinuxParser::Ram(tPid));
       processes_.emplace_back(p);
     }
 
