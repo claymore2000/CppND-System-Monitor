@@ -69,7 +69,7 @@ vector<int> LinuxParser::Pids()
   return pids;
 }
 
-// TODO: Read and return the system memory utilization
+// Read and return the system memory utilization
 // from linux utility free, total memory = used + free + buff/cache
 float LinuxParser::MemoryUtilization()
 {
@@ -80,11 +80,14 @@ float LinuxParser::MemoryUtilization()
   short foundValues = 0;
   float totalMem = 0.0;
   float freeMem = 0.0;
+  float inactive = 0.0;
+  float inactivefile = 0.0;
   
   std::ifstream filestream(kProcDirectory + kMeminfoFilename);
 
   if (filestream.is_open())
     {
+      std::string::size_type sz;   // alias of size_t
       while ((std::getline(filestream, line)) && (foundValues < 2))
 	{
 	  std::istringstream linestream(line);
@@ -92,21 +95,27 @@ float LinuxParser::MemoryUtilization()
 	    {
 	      if (key == "MemTotal:")
 		{
-		  std::string::size_type sz;   // alias of size_t
 		  totalMem = std::stof(value,&sz);
 		  foundValues++;
 		}
 	      else if (key == "MemFree:")
 		{
-		  std::string::size_type sz;   // alias of size_t
 		  freeMem = std::stof(value,&sz);
 		  foundValues++;
+		}
+	      else if (key == "Inactive:")
+		{
+		  inactive = std::stof(value,&sz);
+		}
+	      else if (key == "Inactive(file):")
+		{
+		  inactivefile = std::stof(value,&sz);
 		}
 	    }
 	}
       if (foundValues == 2)
 	{
-	  return (totalMem - freeMem) / totalMem;
+	  return (totalMem - freeMem - inactive - inactivefile) / totalMem;
 	}
 
     }
@@ -114,7 +123,7 @@ float LinuxParser::MemoryUtilization()
 }
 
 
-// TODO: Read and return the system uptime
+//  Read and return the system uptime
 long LinuxParser::UpTime()
 {
   string upTimeInSeconds, idleTimeInSeconds;
@@ -135,11 +144,10 @@ long LinuxParser::UpTime()
   return 0;
 }
 
-// TODO: Read and return the number of jiffies for the system
+//  TODO Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() { return 0; }
 
-// TODO: Read and return the number of active jiffies for a PID
-// REMOVE: [[maybe_unused]] once you define the function
+// Read and return the number of active jiffies for a PID
 
 long LinuxParser::ActiveJiffies(int pid)
 {
@@ -163,15 +171,15 @@ long LinuxParser::ActiveJiffies(int pid)
       
       if (tokens.size() == 52)
 	{
-	  // return stol(tokens.at(13));
 	  long uptime = LinuxParser::UpTime();
 	  if (uptime == 0)
 	    return 0;
 	  long totaltime = stol(tokens.at(13)) + stol(tokens.at(14)) + stol(tokens.at(15)) + stol(tokens.at(16)) ;
-	  return totaltime;
-	  long seconds = (uptime - stol(tokens.at(21)));
-	  // return seconds;
-	  return 100 * ((totaltime / sysconf(_SC_CLK_TCK)) / seconds);
+
+	  long seconds = (uptime - (stol(tokens.at(21)) / sysconf(_SC_CLK_TCK)) );
+
+	  if (seconds > 0)
+	    return 100 * ((totaltime / sysconf(_SC_CLK_TCK)) / seconds);
 	}
     } 
   return 0;
@@ -183,7 +191,7 @@ long LinuxParser::ActiveJiffies() { return 0; }
 // TODO: Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() { return 0; }
 
-// TODO: Read and return CPU utilization
+// Read and return CPU utilization
 vector<std::string> LinuxParser::CpuUtilization()
 {
   string line;

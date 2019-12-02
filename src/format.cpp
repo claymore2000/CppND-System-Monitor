@@ -10,7 +10,6 @@ static const long SecondsInADay = 86400;
 static const long SecondsInAnHour = 3600;
 static const long SecondsInAMinute = 60;
 
-// TODO: Complete this helper function
 // INPUT: Long int measuring seconds
 // OUTPUT: HH:MM:SS
 // REMOVE: [[maybe_unused]] once you define the function

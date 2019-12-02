@@ -14,7 +14,7 @@ class Process {
   void SetUser(std::string user) { user_ = user; }
   std::string Command();                   
   void SetCmdline(std::string command) { cmdline_ = command; }
-  float CpuUtilization();                  // TODO: See src/process.cpp
+  float CpuUtilization();                 
   void SetCpuUtilization(float cpu) { cpu_ = cpu; }
   std::string Ram() const;                       
   void SetRam(std::string ram) { ram_ = ram; } 
@@ -22,7 +22,6 @@ class Process {
   void SetUpTime(long uptime) { uptime_ = uptime; } 
   bool operator<(Process const& a) const;  
 
-  // TODO: Declare any necessary private members
  private:
   int pid_;
   std::string user_;
