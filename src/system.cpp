@@ -35,7 +35,7 @@ vector<Process>& System::Processes()
       p.SetRam(LinuxParser::Ram(tPid));
       p.SetUpTime(LinuxParser::UpTime(tPid));
       p.SetCmdline(LinuxParser::Command(tPid));
-
+      p.SetCpuUtilization(LinuxParser::ActiveJiffies(tPid));
       processes_.emplace_back(p);
 
     }

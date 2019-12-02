@@ -12,7 +12,7 @@ using std::vector;
 
 int Process::Pid() { return pid_; }
 
-float Process::CpuUtilization() { return 0; }
+float Process::CpuUtilization() { return cpu_; }
 
 string Process::Command() { return cmdline_; }
 

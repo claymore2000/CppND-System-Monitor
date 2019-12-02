@@ -140,7 +140,42 @@ long LinuxParser::Jiffies() { return 0; }
 
 // TODO: Read and return the number of active jiffies for a PID
 // REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::ActiveJiffies(int pid[[maybe_unused]]) { return 0; }
+
+long LinuxParser::ActiveJiffies(int pid)
+{
+  string line;
+  std::string pidAsStringDir = std::to_string(pid) + "/";
+  std::ifstream filestream(kProcDirectory + pidAsStringDir + kStatFilename);
+
+  if (filestream.is_open())
+    {
+      vector<string> tokens;
+      while (std::getline(filestream, line))
+	{
+	  std::stringstream stat_line(line);
+	  std::string token_of_stat_line;
+	  
+	  while(getline(stat_line, token_of_stat_line, ' ')) 
+	    {
+	      tokens.push_back(token_of_stat_line);
+	    }
+	}
+      
+      if (tokens.size() == 52)
+	{
+	  // return stol(tokens.at(13));
+	  long uptime = LinuxParser::UpTime();
+	  if (uptime == 0)
+	    return 0;
+	  long totaltime = stol(tokens.at(13)) + stol(tokens.at(14)) + stol(tokens.at(15)) + stol(tokens.at(16)) ;
+	  return totaltime;
+	  long seconds = (uptime - stol(tokens.at(21)));
+	  // return seconds;
+	  return 100 * ((totaltime / sysconf(_SC_CLK_TCK)) / seconds);
+	}
+    } 
+  return 0;
+}
 
 // TODO: Read and return the number of active jiffies for the system
 long LinuxParser::ActiveJiffies() { return 0; }
@@ -357,7 +392,7 @@ string LinuxParser::User(std::string uid[[maybe_unused]])
 
 // TODO: Read and return the uptime of a process
 // REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::UpTime(int pid[[maybe_unused]])
+long LinuxParser::UpTime(int pid)
 {
   string line;
   std::string pidAsStringDir = std::to_string(pid) + "/";
@@ -375,7 +410,7 @@ long LinuxParser::UpTime(int pid[[maybe_unused]])
 	    {
 	      tokens.push_back(token_of_stat_line);
 	    }
-	  return stol(tokens.at(21));
+	  return stol(tokens.at(21))/sysconf(_SC_CLK_TCK);
 	}
     }
   return 0;
