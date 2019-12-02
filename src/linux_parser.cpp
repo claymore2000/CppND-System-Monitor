@@ -47,19 +47,22 @@ string LinuxParser::Kernel() {
 }
 
 // BONUS: Update this to use std::filesystem
-vector<int> LinuxParser::Pids() {
+vector<int> LinuxParser::Pids()
+{
   vector<int> pids;
   DIR* directory = opendir(kProcDirectory.c_str());
   struct dirent* file;
   while ((file = readdir(directory)) != nullptr) {
     // Is this a directory?
-    if (file->d_type == DT_DIR) {
+    if (file->d_type == DT_DIR)
+      {
       // Is every character of the name a digit?
       string filename(file->d_name);
-      if (std::all_of(filename.begin(), filename.end(), isdigit)) {
-        int pid = stoi(filename);
-        pids.push_back(pid);
-      }
+      if (std::all_of(filename.begin(), filename.end(), isdigit))
+	{
+	  int pid = stoi(filename);
+	  pids.push_back(pid);
+	}
     }
   }
   closedir(directory);
@@ -146,7 +149,53 @@ long LinuxParser::ActiveJiffies() { return 0; }
 long LinuxParser::IdleJiffies() { return 0; }
 
 // TODO: Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() { return {}; }
+vector<std::string> LinuxParser::CpuUtilization()
+{
+  string line;
+  string key;
+  string user;
+  string nice;
+  string system;
+  string idle;
+  string iowait;
+  string irq;
+  string softirq;
+  string steal;
+  string guest;
+  string guestnice;
+
+  std::vector<std::string> cpuUtilization(10);
+  std::ifstream filestream(kProcDirectory + kStatFilename);
+
+  if (filestream.is_open())
+    {
+      while (std::getline(filestream, line))
+	{
+	  std::istringstream linestream(line);
+
+	  while (linestream >> key >> user >> nice >> system >> idle 
+		 >> iowait >> irq >> softirq >> steal >> guest >> guestnice)
+	    {
+	      if (key == "cpu")
+		{
+		  cpuUtilization.at(kUser_) = user;
+		  cpuUtilization.at(kNice_) = nice;
+		  cpuUtilization.at(kSystem_) = system;
+		  cpuUtilization.at(kIdle_) = idle; 
+		  cpuUtilization.at(kIOwait_) = iowait;
+		  cpuUtilization.at(kIRQ_) = irq; 
+		  cpuUtilization.at(kSoftIRQ_) = softirq;
+		  cpuUtilization.at(kSteal_) = steal;
+		  cpuUtilization.at(kGuest_) = guest;
+		  cpuUtilization.at(kGuestNice_) = guestnice;
+		  return cpuUtilization;
+		}
+	    }
+	}
+    }
+
+  return {};
+}
 
 // TODO: Read and return the total number of processes
 int LinuxParser::TotalProcesses()
@@ -210,11 +259,58 @@ string LinuxParser::Ram(int pid[[maybe_unused]]) { return string(); }
 
 // TODO: Read and return the user ID associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Uid(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::Uid(int pid[[maybe_unused]])
+{
+  string line;
+  string key;
+  string uid;
+  std::string pidAsStringDir = std::to_string(pid) + "/";
+  std::ifstream filestream(kProcDirectory + pidAsStringDir + kStatusFilename);
+
+  if (filestream.is_open())
+    {
+      while (std::getline(filestream, line))
+	{
+	  std::istringstream linestream(line);
+	  while (linestream >> key >> uid)
+	    {
+	      if (key == "Uid:")
+		{
+		  return uid;
+		}
+	    }
+	}
+    }
+  return uid;
+}
 
 // TODO: Read and return the user associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::User(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::User(std::string uid[[maybe_unused]])
+{
+  string line;
+  string uid_read;
+  string dont_care;
+  string user_name;
+  std::ifstream filestream(kPasswordPath);
+
+  if (filestream.is_open())
+    {
+      while (std::getline(filestream, line))
+	{
+	  std::replace(line.begin(), line.end(), ':', ' ');
+	  std::istringstream linestream(line);
+	  while (linestream >> user_name >> dont_care >> uid_read)
+	    {
+	      if (uid_read == uid)
+		{
+		  return user_name;
+		}
+	    }
+	}
+    }
+  return string();
+}
 
 // TODO: Read and return the uptime of a process
 // REMOVE: [[maybe_unused]] once you define the function
