@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <string>
 #include <vector>
-
+#include <sstream>
 #include "linux_parser.h"
 
 using std::stof;
@@ -251,7 +251,23 @@ int LinuxParser::RunningProcesses()
 
 // TODO: Read and return the command associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::Command(int pid[[maybe_unused]])
+{
+  string line;
+  std::string pidAsStringDir = std::to_string(pid) + "/";
+  std::ifstream filestream(kProcDirectory + pidAsStringDir + kCmdlineFilename);
+
+  if (filestream.is_open())
+    {
+      while (std::getline(filestream, line))
+	{
+	  filestream.close();
+	  return line;
+	}
+    }
+  string retNA{"N/A"};
+  return retNA;
+}
 
 // TODO: Read and return the memory used by a process
 // REMOVE: [[maybe_unused]] once you define the function
@@ -263,6 +279,8 @@ string LinuxParser::Ram(int pid[[maybe_unused]])
   std::string pidAsStringDir = std::to_string(pid) + "/";
   std::ifstream filestream(kProcDirectory + pidAsStringDir + kStatusFilename);
 
+  // std::string notAvailable{"N/A"};
+  
   if (filestream.is_open())
     {
       while (std::getline(filestream, line))
@@ -279,7 +297,7 @@ string LinuxParser::Ram(int pid[[maybe_unused]])
 	}
     }
 	  
-  return string("33");
+  return "0"; // notAvailable;
 }
 
 // TODO: Read and return the user ID associated with a process
@@ -341,5 +359,24 @@ string LinuxParser::User(std::string uid[[maybe_unused]])
 // REMOVE: [[maybe_unused]] once you define the function
 long LinuxParser::UpTime(int pid[[maybe_unused]])
 {
+  string line;
+  std::string pidAsStringDir = std::to_string(pid) + "/";
+  std::ifstream filestream(kProcDirectory + pidAsStringDir + kStatFilename);
+
+  if (filestream.is_open())
+    {
+      while (std::getline(filestream, line))
+	{
+	  std::stringstream stat_line(line);
+	  std::string token_of_stat_line;
+	  vector<string> tokens;
+	  
+	  while(getline(stat_line, token_of_stat_line, ' ')) 
+	    {
+	      tokens.push_back(token_of_stat_line);
+	    }
+	  return stol(tokens.at(21));
+	}
+    }
   return 0;
 }
