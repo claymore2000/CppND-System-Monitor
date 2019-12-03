@@ -21,27 +21,19 @@ Processor& System::Cpu() { return cpu_; }
 vector<Process>& System::Processes()
 {
   vector<int> currentPids = LinuxParser::Pids();
-  size_t currentPidsSize = currentPids.size();
   processes_.clear();
 
-  for (unsigned int i = 0; i < currentPidsSize; i++)
+  for (const auto &tPid : currentPids)
     {
       Process p;
 
-      int tPid = currentPids.at(i);
-
-      p.SetPid(tPid);
-      p.SetUser(LinuxParser::User(LinuxParser::Uid(tPid)));
-      p.SetRam(LinuxParser::Ram(tPid));
-      p.SetUpTime(LinuxParser::UpTime(tPid));
-      p.SetCmdline(LinuxParser::Command(tPid));
-      p.SetCpuUtilization(LinuxParser::ActiveJiffies(tPid));
+      p.ObtainInfo(tPid);
       processes_.emplace_back(p);
-
     }
-  sort(processes_.begin(),processes_.end());
-  std::reverse(processes_.begin(), processes_.end());
+  
+  sort(processes_.begin(),processes_.end(),std::greater<Process>{});
 
+  // std::exit(13);
   return processes_;
 }
 

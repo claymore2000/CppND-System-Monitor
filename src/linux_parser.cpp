@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+
 #include "linux_parser.h"
 
 using std::stof;
@@ -149,7 +150,7 @@ long LinuxParser::Jiffies() { return 0; }
 
 // Read and return the number of active jiffies for a PID
 
-long LinuxParser::ActiveJiffies(int pid)
+float LinuxParser::ActiveJiffies(int pid)
 {
   string line;
   std::string pidAsStringDir = std::to_string(pid) + "/";
@@ -169,20 +170,19 @@ long LinuxParser::ActiveJiffies(int pid)
 	    }
 	}
       
-      if (tokens.size() == 52)
-	{
+      if (tokens.size() == 52) // /proc/[pid]/stat better have 52 tokens or else a problem ...
+	{ // local variables made for readability, see man proc for details about accessed variables
 	  long uptime = LinuxParser::UpTime();
-	  if (uptime == 0)
-	    return 0;
-	  long totaltime = stol(tokens.at(13)) + stol(tokens.at(14)) + stol(tokens.at(15)) + stol(tokens.at(16)) ;
+	  float totaltime = (stof(tokens.at(13)) + stof(tokens.at(14)) + stof(tokens.at(15)) + stof(tokens.at(16)));
+	  float totaltimeInSeconds = totaltime / sysconf(_SC_CLK_TCK);
+	  float secondsUpTime = uptime - (stof(tokens.at(21)) / sysconf(_SC_CLK_TCK));
+	  float cpu_usage = (totaltimeInSeconds) / secondsUpTime;
 
-	  long seconds = (uptime - (stol(tokens.at(21)) / sysconf(_SC_CLK_TCK)) );
+	  return cpu_usage;
 
-	  if (seconds > 0)
-	    return 100 * ((totaltime / sysconf(_SC_CLK_TCK)) / seconds);
 	}
     } 
-  return 0;
+  return 0.0;  // returned if problem
 }
 
 // TODO: Read and return the number of active jiffies for the system
@@ -308,8 +308,7 @@ string LinuxParser::Command(int pid[[maybe_unused]])
 	  return line;
 	}
     }
-  string retNA{"N/A"};
-  return retNA;
+  return "N/A";
 }
 
 // TODO: Read and return the memory used by a process
